@@ -22,9 +22,12 @@ const yargs = require("yargs");
 const options = yargs
     .usage("Usage: -s <season_number>")
     .option("s", { alias: "season", describe: "season number", type: "string", demandOption: true })
+    .option("d", { alias: "debug", describe: "debug", type: "boolean", demandOption: false, default: false })
     .argv;
 
 console.log(`Scraping data for season ${options.season}...`);
+
+global.DEBUG = options.verbose;
 
 (async () => {
     await init(options.season);

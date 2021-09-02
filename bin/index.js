@@ -1,13 +1,17 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const fsPromises = require('fs').promises;
+const cliProgress = require('cli-progress');
 
 async function scrape(start, end, season) {
+
+    // create a new progress bar instance and use shades_classic theme
+    const p_bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 
     let first_ep = start, last_ep = end;
 
     if (!start || !end || !season) {
-        console.log(`Missing mandatory arguments`);
+        DEBUG && console.log(`Missing mandatory arguments`);
         throw new Error(`SCRAPE_ARGS_ERROR`)
     }
 
@@ -16,7 +20,7 @@ async function scrape(start, end, season) {
 
     page.on('console', msg => {
         for (let i = 0; i < msg.args.length; ++i)
-            console.log(`${i}: ${msg.args[i]}`);
+            DEBUG && console.log(`${i}: ${msg.args[i]}`);
     });
 
     await page.goto('https://pokemon360.me/watch-pokemon-episodes-english-dubbed/');
@@ -44,9 +48,12 @@ async function scrape(start, end, season) {
     });
     list = list.reverse();
 
-    console.log(list);
+    DEBUG && console.log(list);
 
     console.log(`Scraping data from ep ${start} to ${end}`);
+
+    // progress bar start
+    p_bar.start((end - start) + 1, 0);
 
     // for (let i = start - 1; i < end; i++) {
     //     console.log(list[i])
@@ -151,12 +158,12 @@ async function scrape(start, end, season) {
         list[i].imdb_img = imdb_data.imdb_img;
         list[i].imdb_title = imdb_data.title;
 
-        console.log(list[i]);
+        DEBUG && console.log('\nscraped: ', list[i]);
+        DEBUG && console.log('\nfilepath: ', process.cwd());
 
-        fs.readFile(process.cwd + `season${season}.json`, function (err, data) {
+        fs.readFile(process.cwd() + `/season${season}.json`, function (err, data) {
             var json;
-
-            console.log('data', typeof (data));
+            // console.log('data', typeof (data));
 
             if (data) {
                 json = JSON.parse(data);
@@ -166,15 +173,21 @@ async function scrape(start, end, season) {
                 json.push(list[i]);
             }
 
-            fs.writeFile(`season${season}.json`, JSON.stringify(json), (err) => {
+            fs.writeFile(process.cwd() + `/season${season}.json`, JSON.stringify(json), (err) => {
                 if (err) throw err;
-                console.log('write-complete');
+                DEBUG && console.log('\nwrite-complete');
+
+                // update the current value in your application..
+                p_bar.update(list[i].ep_season);
             })
         });
 
     }
 
     await browser.close();
+    // stop the progress bar
+    p_bar.stop();
+    console.log('Finished! Have Fun! :)');
 
 }
 
@@ -189,7 +202,7 @@ async function init(season) {
             throw new Error(`SEASON_FILE_ERROR`);
         });
 
-    console.log('seasons file: ', data)
+    DEBUG && console.log('seasons file: ', data)
 
     if (data) {
         list = JSON.parse(data);
@@ -202,7 +215,7 @@ async function init(season) {
         });
 
         let res = list.pop();
-        console.log('args: ', res);
+        DEBUG && console.log('args: ', res);
 
         await scrape(res.start, res.end, season, res.start);
     }
