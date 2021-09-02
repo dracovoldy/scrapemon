@@ -4,7 +4,7 @@
   "description": "",
   "main": "bin/poke.js",
   "bin": {
-    "poke": "./bin/poke.js"
+    "scrapemon": "./bin/poke.js"
   },
   "scripts": {
     "start": "node ./bin/poke.js"
