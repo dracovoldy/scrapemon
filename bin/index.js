@@ -195,7 +195,7 @@ async function init(season) {
     if (!season) {
         throw new Error(`SEASON_NOT_FOUND`);
     }
-    const data = await fsPromises.readFile('seasons_list.json', {
+    const data = await fsPromises.readFile(__dirname + '/seasons_list.json', {
         encoding: 'utf8'
     })
         .catch((err) => {
